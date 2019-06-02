@@ -1,0 +1,19 @@
+{
+  "name": "online-game",
+  "version": "1.0.0",
+  "description": "Online JavaScript game",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "webpack-dev-server --contentBase ./dist"
+  },
+  "author": "DemoniacDeath",
+  "license": "ISC",
+  "devDependencies": {
+    "webpack": "^4.32.2",
+    "webpack-cli": "^3.3.2",
+    "webpack-dev-server": "^3.5.1"
+  },
+  "dependencies": {
+    "socket.io-client": "^2.2.0"
+  }
+}
