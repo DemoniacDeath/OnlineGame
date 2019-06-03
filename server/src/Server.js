@@ -19,10 +19,10 @@ class Server {
   }
   connect(socket) {
     // Give the Client enough data to identify itself.
-    const newClient = new Network(socket);
+    const newClient = socket;
 
     // Entity ID == Socket.ID (for now)
-    const entity_id = newClient.socket_id;
+    const entity_id = newClient.id;
 
     // Create a new Entity for this Client.
     // Set the initial state of the Entity (e.g. spawn point)
@@ -33,17 +33,21 @@ class Server {
     // Send new entity to all existing clients
     for (let i in this.clients) {
       let client = this.clients[i];
-      client.sendNew(newEntity);
+      client.emit('new', newEntity);
     }
 
     // Send all entities to new client
     for (let i in this.entities) {
       let entity = this.entities[i];
-      newClient.sendNew(entity);
+      newClient.emit('new', entity);
     }
 
     // Remember the new client
     this.clients[entity_id] = newClient;
+
+    newClient.on('move', (message) => {
+      this.processInput(message);
+    });
   }
   disconnect(socket) {
     if (!this.entities[socket.id]) return;
@@ -59,7 +63,7 @@ class Server {
     // Notify all remaining clients of the fact that the entity has left the server
     for (let i in this.clients) {
       let client = this.clients[i];
-      client.sendLeft(entity);
+      client.emit('left', entity);
     }
   }
   // Check whether this input seems to be valid (e.g. "make sense" according
@@ -71,27 +75,30 @@ class Server {
     return true;
   }
   processInputs() {
-    // Process all pending messages from clients.
-    while (true) {
-      let messages = [];
-      for (let clientId in this.clients) {
-        let message = this.clients[clientId].receive();
-        if (message) {
-          messages.push(message);
-        }
-      }
-      if (!messages.length) {
-        break;
-      }
-      for (let message of messages) {
-        // Update the state of the entity, based on its input.
-        // We just ignore inputs that don't look valid; this is what prevents clients from cheating.
-        if (this.validateInput(message)) {
-          var id = message.eid;
-          this.entities[id].applyInput(message);
-          this.last_processed_input[id] = message.id;
-        }
-      }
+    // // Process all pending messages from clients.
+    // while (true) {
+    //   let messages = [];
+    //   for (let clientId in this.clients) {
+    //     let message = this.clients[clientId].receive();
+    //     if (message) {
+    //       messages.push(message);
+    //     }
+    //   }
+    //   if (!messages.length) {
+    //     break;
+    //   }
+    //   for (let message of messages) {
+    //     this.processInput(message);
+    //   }
+    // }
+  }
+  processInput(message) {
+    // Update the state of the entity, based on its input.
+    // We just ignore inputs that don't look valid; this is what prevents clients from cheating.
+    if (this.validateInput(message)) {
+      var id = message.eid;
+      this.entities[id].applyInput(message);
+      this.last_processed_input[id] = message.id;
     }
   }
   // Send the world state to all the connected clients.
@@ -110,7 +117,7 @@ class Server {
     // Broadcast the state to all the clients.
     for (let entity_id in this.clients) {
       let client = this.clients[entity_id];
-      client.sendState(world_state);
+      client.emit('state', world_state);
     }
   }
 }

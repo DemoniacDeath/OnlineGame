@@ -6,7 +6,6 @@ import { requestAnimFrame } from "./util";
 export class Client {
   constructor(canvas, network) {
     this.interpolation_interval = 100.0;
-    this.reconcilliation_interval = 0;
 
     // Local representation of the entities.
     this.entities = {};
@@ -15,12 +14,11 @@ export class Client {
     this.key_right = false;
     // Network connection.
     this.network = network;
-    this.network.registerStateListener((message) => {
+    this.network.on('state', (message) => {
       this.processServerMessage(message);
-      // this.interpolateEntities();
-    }, this.reconcilliation_interval);
+    });
     // Unique ID of our entity.
-    this.entity_id = network.socket_id;
+    this.entity_id = network.id;
     // Data needed for reconciliation.
     this.input_sequence_number = 0;
     this.pending_inputs = [];
@@ -110,7 +108,7 @@ export class Client {
     }
     input.id = this.input_sequence_number++;
     // Send the input to the server.
-    this.network.sendMove(input);
+    this.network.emit('move', input);
     // Do client-side prediction.
     this.entities[this.entity_id].applyInput(input);
     // Save this input for later reconciliation.

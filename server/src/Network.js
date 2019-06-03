@@ -3,35 +3,16 @@
 // =============================================================================
 class Network {
   constructor(socket) {
-    this.messages = [];
     this.socket = socket;
-    this.socket_id = socket.id;
-    this.socket.on('move', (message) => {
-      this.messages.push(message);
-    });
+    this.id = socket.id;
   }
-  // Send a message.
-  sendState(message) {
-    if (this.socket) {
-      this.socket.emit('state', message);
-    }
+  emit(name, message) {
+    this.socket.emit(name, message);
   }
-  sendNew(message) {
-    if (this.socket) {
-      this.socket.emit('new', message);
-    }
-  }
-  sendLeft(message) {
-    if (this.socket) {
-      this.socket.emit('left', message);
-    }
-  }
-  // Returns a received message, or undefined if there are no messages available yet.
-  receive() {
-    if (this.messages.length > 0) {
-      var message = this.messages.shift();
-      return message;
-    }
+  on(name, listener) {
+    if (!listener) return;
+
+    this.socket.on(name, listener);
   }
 }
 exports.Network = Network;

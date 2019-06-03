@@ -25,7 +25,7 @@ socket.on('connect', () => {
 
   setCanvasSize(gameCanvas);
 
-  var client = new Client(gameCanvas, new Network(socket));
+  var client = new Client(gameCanvas, socket);
   window.client = client;
 
   // When the client presses the a/d keys, set the corresponding flag in the client.
