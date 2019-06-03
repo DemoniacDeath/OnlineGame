@@ -3,24 +3,44 @@
 // =============================================================================
 export class Network {
   constructor(socket) {
-    this.messages = [];
+    this.buffers = {
+      state: []
+    };
+    this.listener_intervals = {
+      state: null
+    };
     this.socket = socket;
     this.socket_id = socket.id;
-    this.socket.on('state', (message) => {
-      this.messages.push(message);
-    });
+    this.stats = {
+      length: 0
+    };
   }
   // Send a message.
   sendMove(message) {
-    if (this.socket) {
-      this.socket.emit('move', message);
-    }
+    this.socket.emit('move', message);
   }
-  // Returns a received message, or undefined if there are no messages available yet.
-  receive() {
-    if (this.messages.length > 0) {
-      var message = this.messages.splice(0, 1).pop();
-      return message;
-    }
+  registerStateBufferedListener(listener, interval) {
+    this.registerBufferedListener(listener, interval, 'state');
+  }
+  registerStateListener(listener) {
+    this.registerListener(listener, 'state');
+  }
+  registerListener(listener, name) {
+    this.socket.on(name, listener);
+  }
+  registerBufferedListener(listener, interval, name) {
+    if (!listener) return;
+
+    this.socket.on(name, (message) => {
+      this.buffers[name].push(message);
+    });
+    clearInterval(this.listener_intervals[name]);
+    this.listener_intervals[name] = setInterval(() => {
+      while (true) {
+        const message = this.buffers[name].shift();
+        if (!message) break;
+        listener(message);
+      }
+    }, interval);
   }
 }
