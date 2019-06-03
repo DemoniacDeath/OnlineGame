@@ -8,9 +8,8 @@ export class Client {
     // Input state.
     this.key_left = false;
     this.key_right = false;
-    // Simulated network connection.
+    // Network connection.
     this.network = network;
-    this.lag = 250;
     // Unique ID of our entity. Assigned by Server on connection.
     this.entity_id = network.socket_id;
     // Data needed for reconciliation.

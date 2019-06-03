@@ -11,36 +11,50 @@ class Server {
         // Last processed input for each client.
         this.last_processed_input = {};
         // Default update rate.
-        this.setUpdateRate(10);
+        this.setUpdateRate(3);
     }
     connect(socket) {
         // Give the Client enough data to identify itself.
-        var entity_id = socket.id;
-        this.clients[entity_id] = new Network(socket);
+        const newClient = new Network(socket);
+
+        // Entity ID == Socket.ID (for now)
+        const entity_id = newClient.socket_id;
+        
         // Create a new Entity for this Client.
-        var entity = new Entity(entity_id, ~~(Math.random() * 10));
-        this.entities[entity_id] = entity;
         // Set the initial state of the Entity (e.g. spawn point)
+        const newEntity = new Entity(entity_id, ~~(Math.random() * 10));
+
+        this.entities[entity_id] = newEntity;
+
+        // Send new entity to all existing clients
+        for (let i in this.clients) {
+            let client = this.clients[i];
+            client.sendNew(newEntity);
+        }
+        
+        // Send all entities to new client
         for (let i in this.entities) {
             let entity = this.entities[i];
-            this.clients[entity_id].sendNew(entity);
+            newClient.sendNew(entity);
         }
-        for (let i in this.clients) {
-            if (i == entity_id)
-                continue;
-            let client = this.clients[i];
-            client.sendNew(entity);
-        }
+
+        // Remember the new client
+        this.clients[entity_id] = newClient;
     }
     disconnect(socket) {
-        if (this.entities[socket.id]) {
-            let entity = this.entities[socket.id];
-            delete this.entities[socket.id];
-            delete this.clients[socket.id];
-            for (let i in this.clients) {
-                let client = this.clients[i];
-                client.sendLeft(entity);
-            }
+        if (!this.entities[socket.id]) return;
+
+        // Cache the entity that is going to be deleted
+        let entity = this.entities[socket.id];
+
+        // Delete the entity and the client
+        delete this.entities[socket.id];
+        delete this.clients[socket.id];
+
+        // Notify all remaining clients of the fact that the entity has left the server
+        for (let i in this.clients) {
+            let client = this.clients[i];
+            client.sendLeft(entity);
         }
     }
     setUpdateRate(hz) {

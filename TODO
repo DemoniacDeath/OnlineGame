@@ -1,0 +1,7 @@
+1. Figure out the client side code, including entity interpolation
+2. Switch to TypeScript (might be a PITA with all the shared code)
+3. Install Matter.js and figure out the client-server architecture for physics
+4. Rewrite jsplatformer in this new engine. Formalize the engine?
+5. Make an actual game
+6. ???????
+7. PROFIT!
