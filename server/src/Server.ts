@@ -1,8 +1,16 @@
-const { Entity } = require("./Entity");
+import { Entity } from "../../shared/Entity";
+import { Input } from "../../shared/Input";
+import { State } from "../../shared/State";
+import { Socket } from "socket.io";
+
 // =============================================================================
 //  The Server.
 // =============================================================================
-class Server {
+export class Server {
+  update_interval: number;
+  clients: { [index:string] : Socket};
+  entities: { [index:string] : Entity};
+  last_processed_input: { [index:string]: number };
   constructor() {
     this.update_interval = 100;
     // Connected clients and their entities.
@@ -12,11 +20,10 @@ class Server {
     this.last_processed_input = {};
     // Default update rate.
     setInterval(() => {
-      this.processInputs();
       this.sendWorldState();
     }, this.update_interval);
   }
-  connect(socket) {
+  connect(socket: Socket) {
     // Give the Client enough data to identify itself.
     const newClient = socket;
 
@@ -44,11 +51,11 @@ class Server {
     // Remember the new client
     this.clients[entity_id] = newClient;
 
-    newClient.on('move', (message) => {
+    newClient.on('move', (message: Input) => {
       this.processInput(message);
     });
   }
-  disconnect(socket) {
+  disconnect(socket: Socket) {
     if (!this.entities[socket.id]) return;
 
     // Cache the entity that is going to be deleted
@@ -67,31 +74,13 @@ class Server {
   }
   // Check whether this input seems to be valid (e.g. "make sense" according
   // to the physical rules of the World)
-  validateInput(input) {
+  validateInput(input: Input) {
     if (input.dt > 1 / 10) {
       return false;
     }
     return true;
   }
-  processInputs() {
-    // // Process all pending messages from clients.
-    // while (true) {
-    //   let messages = [];
-    //   for (let clientId in this.clients) {
-    //     let message = this.clients[clientId].receive();
-    //     if (message) {
-    //       messages.push(message);
-    //     }
-    //   }
-    //   if (!messages.length) {
-    //     break;
-    //   }
-    //   for (let message of messages) {
-    //     this.processInput(message);
-    //   }
-    // }
-  }
-  processInput(message) {
+  processInput(message: Input) {
     // Update the state of the entity, based on its input.
     // We just ignore inputs that don't look valid; this is what prevents clients from cheating.
     if (this.validateInput(message)) {
@@ -104,7 +93,7 @@ class Server {
   sendWorldState() {
     // Gather the state of the world. In a real app, state could be filtered to avoid leaking data
     // (e.g. position of invisible enemies).
-    var world_state = [];
+    var world_state: State[] = [];
     for (let entity_id in this.entities) {
       let entity = this.entities[entity_id];
       world_state.push({
@@ -120,4 +109,3 @@ class Server {
     }
   }
 }
-exports.Server = Server;

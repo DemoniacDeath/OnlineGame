@@ -1,10 +1,26 @@
 import { requestAnimFrame } from "./util";
 
+import { Entity } from "@shared/Entity";
+import { Input } from "@shared/Input";
+import { State } from "@shared/State";
+
 // =============================================================================
 //  The Client.
 // =============================================================================
 export class Client {
-  constructor(canvas, network) {
+  interpolation_interval: number;
+  entities: { [index:string] : Entity};
+  key_left: boolean;
+  key_right: boolean;
+  network: SocketIOClient.Socket;
+  entity_id: string;
+  input_sequence_number: number;
+  pending_inputs: Input[];
+  canvas: HTMLCanvasElement;
+
+  private last_ts: number;
+
+  constructor(canvas: HTMLCanvasElement, network: SocketIOClient.Socket) {
     this.interpolation_interval = 100.0;
 
     // Local representation of the entities.
@@ -14,7 +30,7 @@ export class Client {
     this.key_right = false;
     // Websocket connection.
     this.network = network;
-    this.network.on('state', (message) => {
+    this.network.on('state', (message: State[]) => {
       this.processServerMessage(message);
     });
     // Unique ID of our entity.
@@ -39,14 +55,14 @@ export class Client {
       this.update();
     });
   }
-  addEntity(entity) {
+  addEntity(entity: Entity) {
     this.entities[entity.entity_id] = entity;
   }
-  removeEntity(entity_id) {
+  removeEntity(entity_id: string) {
     delete this.entities[entity_id];
   }
 
-  processServerMessage(message) {
+  processServerMessage(message: State[]) {
     // World state is a list of entity states.
     for (var i = 0; i < message.length; i++) {
       var state = message[i];
@@ -77,7 +93,7 @@ export class Client {
         // Received the position of an entity other than this client's.
         // Add it to the position buffer.
         var timestamp = +new Date();
-        entity.position_buffer.push([timestamp, state.position]);
+        entity.position_buffer.push({timestamp, position: state.position});
       }
     }
   }
@@ -92,9 +108,11 @@ export class Client {
     var dt_sec = (now_ts - last_ts) / 1000.0;
     this.last_ts = now_ts;
     // Package client's input.
-    var input = {
+    var input: Input = {
       eid: this.entity_id,
-      dt: dt_sec
+      dt: dt_sec,
+      x: 0,
+      id: 0
     };
     if (this.key_right) {
       input.x = 1;
@@ -128,15 +146,15 @@ export class Client {
       // Find the two authoritative positions surrounding the rendering timestamp.
       var buffer = entity.position_buffer;
       // Drop older positions.
-      while (buffer.length >= 2 && buffer[1][0] <= render_timestamp) {
+      while (buffer.length >= 2 && buffer[1].timestamp <= render_timestamp) {
         buffer.shift();
       }
       // Interpolate between the two surrounding authoritative positions.
-      if (buffer.length >= 2 && buffer[0][0] <= render_timestamp && render_timestamp <= buffer[1][0]) {
-        var x0 = buffer[0][1];
-        var x1 = buffer[1][1];
-        var t0 = buffer[0][0];
-        var t1 = buffer[1][0];
+      if (buffer.length >= 2 && buffer[0].timestamp <= render_timestamp && render_timestamp <= buffer[1].timestamp) {
+        var x0 = buffer[0].position;
+        var x1 = buffer[1].position;
+        var t0 = buffer[0].timestamp;
+        var t1 = buffer[1].timestamp;
         entity.x = x0 + (x1 - x0) * (render_timestamp - t0) / (t1 - t0);
       }
     }

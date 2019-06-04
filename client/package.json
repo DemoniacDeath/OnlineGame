@@ -9,6 +9,7 @@
   "author": "DemoniacDeath",
   "license": "ISC",
   "devDependencies": {
+    "@types/socket.io-client": "^1.4.32",
     "ts-loader": "^6.0.2",
     "typescript": "^3.5.1",
     "webpack": "^4.32.2",

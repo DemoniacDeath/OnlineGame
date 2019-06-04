@@ -1,8 +1,10 @@
-const { Server } = require("./Server");
-const port = process.env.PORT || 8081;
-const io = require("socket.io").listen(port, { origins: '*:*' });
+import {Server} from './Server';
+import {listen, Socket} from 'socket.io';
 
-io.on('connection', (socket) => {
+const port = process.env.PORT || 8081;
+const io = listen(port, { origins: '*:*' });
+
+io.on('connection', (socket: Socket) => {
   server.connect(socket);
   socket.on('disconnect', () => {
     server.disconnect(socket);

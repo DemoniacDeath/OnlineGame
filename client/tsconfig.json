@@ -3,9 +3,14 @@
     "module": "es6",
     "target": "es5",
     "noImplicitAny": true,
+    "allowJs": true,
     "sourceMap": true,
-    "outDir": "./dist/",
-    "allowJs": true
+    "outDir": "dist"
   },
-  "compileOnSave": true
+  "include": [
+    "src/**/*"
+  ],
+  "references": [
+    { "path": "../shared" }
+  ]
 }

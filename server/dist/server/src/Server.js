@@ -1,4 +1,6 @@
-const { Entity } = require("./Entity");
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const Entity_1 = require("../../shared/Entity");
 // =============================================================================
 //  The Server.
 // =============================================================================
@@ -12,7 +14,6 @@ class Server {
         this.last_processed_input = {};
         // Default update rate.
         setInterval(() => {
-            this.processInputs();
             this.sendWorldState();
         }, this.update_interval);
     }
@@ -23,7 +24,7 @@ class Server {
         const entity_id = newClient.id;
         // Create a new Entity for this Client.
         // Set the initial state of the Entity (e.g. spawn point)
-        const newEntity = new Entity(entity_id, ~~(Math.random() * 10));
+        const newEntity = new Entity_1.Entity(entity_id, ~~(Math.random() * 10));
         this.entities[entity_id] = newEntity;
         // Send new entity to all existing clients
         for (let i in this.clients) {
@@ -63,24 +64,6 @@ class Server {
             return false;
         }
         return true;
-    }
-    processInputs() {
-        // // Process all pending messages from clients.
-        // while (true) {
-        //   let messages = [];
-        //   for (let clientId in this.clients) {
-        //     let message = this.clients[clientId].receive();
-        //     if (message) {
-        //       messages.push(message);
-        //     }
-        //   }
-        //   if (!messages.length) {
-        //     break;
-        //   }
-        //   for (let message of messages) {
-        //     this.processInput(message);
-        //   }
-        // }
     }
     processInput(message) {
         // Update the state of the entity, based on its input.
