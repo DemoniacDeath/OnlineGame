@@ -12,7 +12,7 @@ export class Client {
     // Input state.
     this.key_left = false;
     this.key_right = false;
-    // Network connection.
+    // Websocket connection.
     this.network = network;
     this.network.on('state', (message) => {
       this.processServerMessage(message);

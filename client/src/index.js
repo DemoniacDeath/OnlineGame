@@ -1,7 +1,5 @@
 import { Client } from "./Client";
 
-import { Network } from "./Network";
-
 import { Entity } from "./Entity";
 
 // =============================================================================
