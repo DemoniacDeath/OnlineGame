@@ -2,15 +2,20 @@
   "name": "server",
   "version": "1.0.0",
   "description": "Online JavaScript game (server)",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon"
+    "start": "nodemon",
+    "build": "tsc",
+    "build-watch": "tsc -w",
+    "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"npm run build-watch\" \"npm run start\""
   },
   "author": "DemoniacDeath",
   "license": "ISC",
   "devDependencies": {
-    "nodemon": "^1.19.1"
+    "concurrently": "^4.1.0",
+    "nodemon": "^1.19.1",
+    "typescript": "^3.5.1"
   },
   "dependencies": {
     "socket.io": "^2.2.0"
