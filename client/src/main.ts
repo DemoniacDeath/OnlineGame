@@ -2,6 +2,7 @@ import { Client } from "./Client";
 
 import { Entity } from "../../shared/Entity";
 import { emitKeypressEvents } from "readline";
+import { API_URL } from "./constants";
 
 export function main() {
   // =============================================================================
@@ -9,7 +10,7 @@ export function main() {
   // =============================================================================
 
   // Actual network using socket.io
-  var socket = require('socket.io-client').connect('http://localhost:8081/');
+  var socket = require('socket.io-client').connect(API_URL);
   socket.on('connect', () => {
     const gameCanvas = document.getElementById('game');
     if (!(gameCanvas instanceof HTMLCanvasElement)) return;
