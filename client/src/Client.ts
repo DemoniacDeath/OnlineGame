@@ -1,8 +1,8 @@
 import { requestAnimFrame } from "./util";
 
-import { Entity } from "@shared/Entity";
-import { Input } from "@shared/Input";
-import { State } from "@shared/State";
+import { Entity } from "../../shared/Entity";
+import { Input } from "../../shared/Input";
+import { State } from "../../shared/State";
 
 // =============================================================================
 //  The Client.
