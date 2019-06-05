@@ -1,5 +1,6 @@
 export interface State {
     entity_id: string;
-    position: number;
+    x: number;
+    y: number;
     last_processed_input: number;
 }

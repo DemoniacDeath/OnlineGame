@@ -24,7 +24,7 @@ class Server {
         const entity_id = newClient.id;
         // Create a new Entity for this Client.
         // Set the initial state of the Entity (e.g. spawn point)
-        const newEntity = new Entity_1.Entity(entity_id, ~~(Math.random() * 10));
+        const newEntity = new Entity_1.Entity(entity_id, ~~(Math.random() * 10), ~~(Math.random() * 10));
         this.entities[entity_id] = newEntity;
         // Send new entity to all existing clients
         for (let i in this.clients) {
@@ -59,18 +59,13 @@ class Server {
     }
     // Check whether this input seems to be valid (e.g. "make sense" according
     // to the physical rules of the World)
-    validateInput(input) {
-        if (input.dt > 1 / 10) {
-            return false;
-        }
-        return true;
-    }
     processInput(message) {
         // Update the state of the entity, based on its input.
         // We just ignore inputs that don't look valid; this is what prevents clients from cheating.
-        if (this.validateInput(message)) {
-            var id = message.eid;
-            this.entities[id].applyInput(message);
+        const id = message.eid;
+        const entity = this.entities[id];
+        if (entity.validateInput(message)) {
+            entity.applyInput(message);
             this.last_processed_input[id] = message.id;
         }
     }
@@ -78,12 +73,13 @@ class Server {
     sendWorldState() {
         // Gather the state of the world. In a real app, state could be filtered to avoid leaking data
         // (e.g. position of invisible enemies).
-        var world_state = [];
+        const world_state = [];
         for (let entity_id in this.entities) {
             let entity = this.entities[entity_id];
             world_state.push({
                 entity_id: entity.entity_id,
-                position: entity.x,
+                x: entity.x,
+                y: entity.y,
                 last_processed_input: this.last_processed_input[entity_id]
             });
         }

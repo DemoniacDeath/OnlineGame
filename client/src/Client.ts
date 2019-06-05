@@ -12,6 +12,8 @@ export class Client {
   entities: { [index:string] : Entity};
   key_left: boolean;
   key_right: boolean;
+  key_up: boolean;
+  key_down: boolean;
   network: SocketIOClient.Socket;
   entity_id: string;
   input_sequence_number: number;
@@ -28,6 +30,8 @@ export class Client {
     // Input state.
     this.key_left = false;
     this.key_right = false;
+    this.key_up = false;
+    this.key_down = false;
     // Websocket connection.
     this.network = network;
     this.network.on('state', (message: State[]) => {
@@ -71,7 +75,8 @@ export class Client {
         continue;
       if (state.entity_id == this.entity_id) {
         // Received the authoritative position of this client's entity.
-        entity.x = state.position;
+        entity.x = state.x;
+        entity.y = state.y;
         // Server Reconciliation. Re-apply all the inputs not yet processed by
         // the server.
         var j = 0;
@@ -93,7 +98,7 @@ export class Client {
         // Received the position of an entity other than this client's.
         // Add it to the position buffer.
         var timestamp = +new Date();
-        entity.position_buffer.push({timestamp, position: state.position});
+        entity.position_buffer.push({timestamp, x: state.x, y: state.y});
       }
     }
   }
@@ -102,33 +107,42 @@ export class Client {
   processInputs() {
     if (!this.entities[this.entity_id])
       return;
+    const entity = this.entities[this.entity_id];
     // Compute delta time since last update.
-    var now_ts = +new Date();
-    var last_ts = this.last_ts || now_ts;
-    var dt_sec = (now_ts - last_ts) / 1000.0;
+    const now_ts = +new Date();
+    const last_ts = this.last_ts || now_ts;
+    const dt_sec = (now_ts - last_ts) / 1000.0;
     this.last_ts = now_ts;
     // Package client's input.
-    var input: Input = {
+    const input: Input = {
       eid: this.entity_id,
       dt: dt_sec,
       x: 0,
+      y: 0,
       id: 0
     };
-    if (this.key_right) {
+    if (this.key_right && entity.x < 10.0) {
       input.x = 1;
     }
-    else if (this.key_left) {
+    else if (this.key_left && entity.x > 0.0) {
       input.x = -1;
     }
-    else {
-      // Nothing interesting happened.
+    if (this.key_up && entity.y > 0.0) {
+      input.y = -1;
+    }
+    else if (this.key_down && entity.y < 10.0) {
+      input.y = 1;
+    }
+    if (input.x == 0 && input.y == 0) {
       return;
     }
     input.id = this.input_sequence_number++;
     // Send the input to the server.
     this.network.emit('move', input);
     // Do client-side prediction.
-    this.entities[this.entity_id].applyInput(input);
+    if (entity.validateInput(input)) {
+      entity.applyInput(input);
+    }
     // Save this input for later reconciliation.
     this.pending_inputs.push(input);
   }
@@ -151,11 +165,14 @@ export class Client {
       }
       // Interpolate between the two surrounding authoritative positions.
       if (buffer.length >= 2 && buffer[0].timestamp <= render_timestamp && render_timestamp <= buffer[1].timestamp) {
-        var x0 = buffer[0].position;
-        var x1 = buffer[1].position;
+        var x0 = buffer[0].x;
+        var x1 = buffer[1].x;
+        var y0 = buffer[0].y;
+        var y1 = buffer[1].y;
         var t0 = buffer[0].timestamp;
         var t1 = buffer[1].timestamp;
         entity.x = x0 + (x1 - x0) * (render_timestamp - t0) / (t1 - t0);
+        entity.y = y0 + (y1 - y0) * (render_timestamp - t0) / (t1 - t0);
       }
     }
   }
@@ -172,11 +189,12 @@ export class Client {
       // Compute size and position.
       var radius = this.canvas.width / 20.0;
       var x = (entity.x / 10.0) * this.canvas.width;
+      var y = (entity.y / 10.0) * this.canvas.height;
   
       // Draw the entity.
       var ctx = this.canvas.getContext("2d");
       ctx.beginPath();
-      ctx.arc(x, this.canvas.height / 2, radius, 0, 2 * Math.PI, false);
+      ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
       ctx.fillStyle = "green";
       ctx.fill();
       ctx.lineWidth = 5;
